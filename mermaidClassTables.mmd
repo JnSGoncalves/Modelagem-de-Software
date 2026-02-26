@@ -1,0 +1,139 @@
+---
+config:
+  layout: elk
+---
+classDiagram
+direction TB
+    class Cliente {
+	    +String id
+	    +String nome
+	    +String email
+	    +String cpf
+	    +Boolean isFidelidade
+	    +Date dataNascimento
+	    +cadastrar()
+	    +confirmarEmail(codigo)
+	    +aderirProgramaFidelidade(dadosCartao)
+	    +reservarIngresso(sessao, assentos)
+	    +visualizarIngressos()
+	    +cancelarReserva(ingresso)
+	    +exportarIngresso(ingresso)
+	    +realizarPagamento(dadosCartao)
+    }
+
+    class Administrador {
+	    +String id
+	    +String nome
+	    +String email
+	    +String cpf
+	    +cadastrarAdministrador()
+	    +cadastrarCinema(cinema)
+	    +gerenciarFilme()
+	    +gerenciarSessao()
+	    +configurarMelhoresAssentos(sessao, assentos)
+	    +emitirRelatorio(periodo)
+    }
+
+    class Cinema {
+	    +String id
+	    +String nome
+	    +String endereco
+	    +adicionarSala(sala)
+	    +listarSalas()
+	    +gerarRelatorio(periodo)
+    }
+
+    class Sala {
+	    +String id
+	    +int numero
+	    +int qtd_assentos
+        +int fk_cinema
+	    +List~int~ melhoresAssentos
+	    +adicionarSessao(sessao)
+	    +definirMelhoresAssentos(listaAssentos)
+	    +verificarDisponibilidade(assento)
+        +validarAssento(assento)
+    }
+
+    class Sessao {
+	    +String id
+	    +Date dataHora
+	    +double valorInteira
+	    +double valorMeia
+	    +int ingressosVendidos
+	    +double rendaTotal
+        +int fk_filme
+        +List~int~ assentos_reservados 
+	    +calcularValor(tipoIngresso)
+        +verificarDisponibilidadeAssento(num_assento)
+        +registrarVenda(ingresso)
+	    +gerarRelatorio()
+    }
+
+    class Filme {
+	    +String id
+	    +String titulo
+	    +int duracao
+        +String sinopse
+	    +String classificacao
+	    +atualizarDados()
+	    +remover()
+    }
+
+    class Ingresso {
+	    +String id
+	    +String cpfTitular
+	    +String tipo
+	    +String status
+	    +int numeroAssento
+        +int fk_sessao
+	    +reservar()
+	    +confirmarPagamento()
+	    +cancelar()
+	    +validarMeiaEntrada(documento)
+    }
+
+    class Validador_de_Documentos {
+	    +validarDocumento(documento)
+	    +aprovarMeiaEntrada()
+	    +rejeitarMeiaEntrada()
+    }
+
+    class PagamentoAPI {
+	    +validarCartao(dadosCartao)
+	    +processarPagamento(valor)
+	    +estornarPagamento(valor)
+    }
+
+    class AncineAPI {
+	    +listarFilmesOficiais()
+	    +enviarRelatorio(relatorio)
+    }
+
+    class Relatorio {
+	    +String id
+	    +Date periodoInicio
+	    +Date periodoFim
+	    +double rendaTotal
+	    +int totalIngressos
+	    +gerarPorSessao(sessao)
+	    +gerarPorFilme(filme)
+	    +gerarPorCinema(cinema)
+	    +exportar()
+    }
+
+    Cliente "1" -- "0..*" Ingresso
+    Administrador -- Cinema : Gerencia
+    Cinema "1" -- "1..*" Sala
+    Sala "1" -- "1..*" Sessao
+    Sessao "1" -- "1" Filme
+    Sessao "1" -- "0..*" Ingresso
+    Ingresso -- Cliente
+    Ingresso -- Sessao
+    Ingresso -- Validador_de_Documentos
+    Cliente -- PagamentoAPI
+    Sessao -- AncineAPI
+    Filme -- AncineAPI
+    Cinema -- Relatorio
+    Filme -- Relatorio
+    Sessao -- Relatorio
