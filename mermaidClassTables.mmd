@@ -122,18 +122,25 @@ direction TB
 	    +exportar()
     }
 
-    Cliente "1" -- "0..*" Ingresso
-    Administrador -- Cinema : Gerencia
-    Cinema "1" -- "1..*" Sala
-    Sala "1" -- "1..*" Sessao
-    Sessao "1" -- "1" Filme
-    Sessao "1" -- "0..*" Ingresso
-    Ingresso -- Cliente
-    Ingresso -- Sessao
-    Ingresso -- Validador_de_Documentos
-    Cliente -- PagamentoAPI
-    Sessao -- AncineAPI
-    Filme -- AncineAPI
-    Cinema -- Relatorio
-    Filme -- Relatorio
-    Sessao -- Relatorio
+Cliente "1" -- "0..*" Ingresso : possui
+
+Administrador "1" -- "1..*" Cinema : gerencia
+
+Cinema "1" -- "1..*" Sala : possui
+Sala "1" -- "1..*" Sessao : utiliza
+
+Sessao "1" -- "1" Filme : exibe
+Sessao "1" -- "0..*" Ingresso : gera
+
+Ingresso "1" -- "1" Cliente : pertence_a
+Ingresso "1" -- "1" Sessao : refere_se
+
+Ingresso .. Validador_de_Documentos : valida_documento
+Cliente .. PagamentoAPI : realiza_pagamento
+
+Sessao .. AncineAPI : informa_dados
+Filme .. AncineAPI : consulta_registro
+
+Cinema .. Relatorio : gera
+Filme .. Relatorio : compoe
+Sessao .. Relatorio : compoe
