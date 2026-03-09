@@ -1,0 +1,224 @@
+UC-01
+sequenceDiagram
+    actor Cliente
+    participant Sistema
+    participant EmailService as "Serviço de Email"
+
+    Cliente->>Sistema: inserirEmail()
+
+    Sistema->>EmailService: enviarCodigoConfirmacao(email)
+    EmailService-->>Cliente: receberCodigo()
+
+    Cliente->>Sistema: confirmarCodigo(codigo)
+
+    alt Código válido
+        Sistema-->>Cliente: solicitarDadosPessoais()
+
+        Cliente->>Sistema: enviarDados(nome, cpf, etc)
+
+        Sistema->>Sistema: verificarDadosValidos()
+
+        alt Dados válidos e únicos
+            Sistema-->>Cliente: cadastroConfirmado()
+        else Email ou CPF já existente
+            Sistema-->>Cliente: informarContaExistente()
+        end
+
+    else Código inválido
+        Sistema-->>Cliente: erroCodigo()
+    end
+
+
+UC-02
+
+sequenceDiagram
+    actor Cliente
+    participant Sistema
+    actor SistemaPagamento as "Sistema de Pagamento"
+    participant EmailService as "Serviço de Email"
+
+    Cliente->>Sistema: acessarAreaFidelidade()
+    Cliente->>Sistema: clicarAderir()
+
+    Cliente->>Sistema: inserirDadosCartao()
+
+    Sistema->>SistemaPagamento: enviarDadosCartao()
+
+    alt Cartão válido e com limite
+        SistemaPagamento-->>Sistema: assinaturaAprovada()
+
+        Sistema->>EmailService: enviarEmailConfirmacao()
+        EmailService-->>Cliente: detalhesContratacao()
+
+        Sistema-->>Cliente: confirmarCadastroFidelidade()
+
+    else Dados inválidos
+        SistemaPagamento-->>Sistema: erroDadosCartao()
+        Sistema-->>Cliente: informarErroDados()
+
+    else Sem limite disponível
+        SistemaPagamento-->>Sistema: limiteInsuficiente()
+        Sistema-->>Cliente: informarLimiteInsuficiente()
+    end
+
+UC-03
+
+sequenceDiagram
+    actor Cliente
+    participant Sistema
+    actor SistemaPagamento as "Sistema de Pagamento"
+    actor Validador as "Validador de Documentos"
+
+    Cliente->>Sistema: realizarLogin()
+
+    Sistema->>Sistema: verificarClienteFidelidade()
+
+    alt Cliente fidelidade
+        Sistema-->>Cliente: liberarMelhoresAssentos()
+    else Cliente comum
+        Sistema-->>Cliente: mostrarAssentosDisponiveis()
+    end
+
+    Cliente->>Sistema: escolherCinema()
+    Cliente->>Sistema: escolherFilme()
+    Cliente->>Sistema: escolherSessao()
+    Cliente->>Sistema: escolherAssentos()
+
+    Cliente->>Sistema: informarCPF()
+
+    Cliente->>Sistema: escolherTipoIngresso()
+
+    alt Meia entrada
+        Sistema-->>Cliente: solicitarDocumento()
+        Cliente->>Sistema: enviarDocumento()
+        Sistema->>Validador: validarDocumento()
+        Validador-->>Sistema: resultadoValidacao()
+
+        alt Documento aprovado
+            Sistema-->>Cliente: continuarReserva()
+        else Documento rejeitado
+            Sistema-->>Cliente: cancelarReserva()
+        end
+    end
+
+    Cliente->>Sistema: inserirDadosCartao()
+
+    Sistema->>SistemaPagamento: enviarDadosCartao()
+
+    alt Pagamento aprovado
+        SistemaPagamento-->>Sistema: confirmarPagamento()
+        Sistema-->>Cliente: disponibilizarIngressos()
+    else Pagamento recusado
+        SistemaPagamento-->>Sistema: pagamentoRecusado()
+        Sistema-->>Cliente: solicitarOutroPagamento()
+    end
+UC-01
+
+sequenceDiagram
+    actor Cliente
+    participant Sistema
+    participant EmailService as "Serviço de Email"
+
+    Cliente->>Sistema: inserirEmail()
+
+    Sistema->>EmailService: enviarCodigoConfirmacao(email)
+    EmailService-->>Cliente: receberCodigo()
+
+    Cliente->>Sistema: confirmarCodigo(codigo)
+
+    alt Código válido
+        Sistema-->>Cliente: solicitarDadosPessoais()
+
+        Cliente->>Sistema: enviarDados(nome, cpf, etc)
+
+        Sistema->>Sistema: verificarDadosValidos()
+
+        alt Dados válidos e únicos
+            Sistema-->>Cliente: cadastroConfirmado()
+        else Email ou CPF já existente
+            Sistema-->>Cliente: informarContaExistente()
+        end
+
+    else Código inválido
+        Sistema-->>Cliente: erroCodigo()
+    end
+UC-04
+sequenceDiagram
+    participant Sistema
+    actor SistemaPagamento
+
+    Sistema->>SistemaPagamento: enviarDadosCartao(dadosCartao)
+
+    SistemaPagamento->>SistemaPagamento: validarCartao(dadosCartao)
+
+    alt Cartão válido
+        SistemaPagamento->>SistemaPagamento: processarPagamento(valor)
+
+        alt Saldo/limite suficiente
+            SistemaPagamento-->>Sistema: confirmarTransacao()
+        else Sem saldo/limite
+            SistemaPagamento-->>Sistema: transacaoNaoAprovada()
+        end
+
+    else Cartão inválido
+        SistemaPagamento-->>Sistema: erroCartaoInvalido()
+    end
+
+
+UC-05
+
+sequenceDiagram
+    actor Cliente
+    participant Sistema
+    participant Ingresso
+    actor SistemaPagamento as "Sistema de Pagamento"
+
+    Cliente->>Sistema: acessarMeusIngressos()
+
+    Sistema->>Ingresso: buscarIngressosCliente()
+    Ingresso-->>Sistema: listaIngressos()
+
+    Sistema-->>Cliente: mostrarIngressos()
+
+    alt Cliente deseja pagar ingresso pendente
+        Cliente->>Sistema: selecionarIngressoPendente()
+
+        Sistema->>SistemaPagamento: enviarDadosPagamento()
+
+        alt Pagamento aprovado
+            SistemaPagamento-->>Sistema: confirmarTransacao()
+            Sistema->>Ingresso: atualizarStatusPagamento()
+            Sistema-->>Cliente: ingressoConfirmado()
+        else Sem saldo ou limite
+            SistemaPagamento-->>Sistema: pagamentoNaoAprovado()
+            Sistema-->>Cliente: informarFalhaPagamento()
+        end
+    end
+
+    alt Cliente deseja exportar ingresso
+        Cliente->>Sistema: selecionarIngressoPago()
+        Sistema->>Ingresso: gerarArquivoIngresso()
+        Sistema-->>Cliente: exportarIngresso()
+    end
+
+UC-13
+
+sequenceDiagram
+    participant Sistema
+    participant Relatorio
+    participant AncineAPI
+    actor Ancine
+
+    Sistema->>Relatorio: gerarRelatorio()
+
+    alt Relatório gerado com sucesso
+        Sistema->>AncineAPI: enviarRelatorio(relatorio)
+        AncineAPI->>Ancine: enviarRelatorio(relatorio)
+        Ancine-->>AncineAPI: confirmarRecebimento()
+        AncineAPI-->>Sistema: confirmação
+    else Erro ao gerar relatório
+        Relatorio-->>Sistema: erro
+    end
+
+
+
