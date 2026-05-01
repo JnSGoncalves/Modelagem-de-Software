@@ -1,0 +1,317 @@
+---
+title: UC-01 Cadastrar Clientes
+---
+sequenceDiagram
+    actor Cliente
+    participant Cliente as Cliente
+
+    Cliente->>Cliente: confirmarEmail(codigo)
+
+    alt Código válido
+        Cliente->>Cliente: atualizarDados(nome, email, cpf, dataNascimento)
+        alt Dados válidos e únicos
+            Cliente-->>Cliente: cadastroConfirmado()
+        else Email ou CPF já existente
+            Cliente-->>Cliente: informarContaExistente()
+        end
+    else Código inválido
+        Cliente-->>Cliente: erroCodigo()
+    end
+
+
+---
+title: UC-02 Cadastrar no Programa de Fidelidade
+---
+sequenceDiagram
+    actor Cliente
+    participant Cliente as Cliente
+    participant PagamentoAPI
+
+    Cliente->>Cliente: solicitarAdesaoFidelidade(dadosCartao)
+    Cliente->>PagamentoAPI: validarCartao(dadosCartao)
+
+    alt Cartão válido
+        PagamentoAPI-->>Cliente: cartaoValido()
+        Cliente->>PagamentoAPI: processarPagamento(valorMensalidade)
+
+        alt Pagamento aprovado
+            PagamentoAPI-->>Cliente: confirmarTransacao()
+            Cliente-->>Cliente: adesaoConfirmada()
+        else Sem limite
+            PagamentoAPI-->>Cliente: transacaoNaoAprovada()
+            Cliente-->>Cliente: informarLimiteInsuficiente()
+        end
+    else Cartão inválido
+        PagamentoAPI-->>Cliente: erroCartaoInvalido()
+        Cliente-->>Cliente: informarErroDados()
+    end
+
+
+---
+title: UC-03 Reservar Ingresso
+---
+sequenceDiagram
+    actor Cliente
+    participant Cinema
+    participant Filme
+    participant Sessao
+    participant Ingresso
+    participant Validador_de_Documentos
+    participant PagamentoAPI
+
+    Cliente->>Cinema: listarSalas()
+    Cliente->>Sessao: verificarDisponibilidadeAssento(numeroAssento)
+
+    alt Cliente fidelidade
+        Sessao-->>Cliente: possuiBeneficioFidelidade(dataAtual)
+    else Cliente comum
+        Sessao-->>Cliente: verificarDisponibilidadeAssento(numeroAssento)
+    end
+
+    Cliente->>Ingresso: reservar()
+
+    alt Meia-entrada
+        Cliente->>Validador_de_Documentos: validarDocumentos(documentos)
+
+        alt Documento aprovado
+            Validador_de_Documentos-->>Ingresso: aprovarDocumento()
+            Ingresso->>Ingresso: marcarPendenteValidacao()
+        else Documento rejeitado
+            Validador_de_Documentos-->>Ingresso: rejeitarDocumento()
+            Ingresso->>Ingresso: cancelar()
+            Sessao->>Sessao: liberarAssentos(assentos)
+        end
+    end
+
+    Cliente->>Cliente: informarPagamento(dadosCartao)
+    Cliente->>PagamentoAPI: validarCartao(dadosCartao)
+
+    alt Cartão válido
+        PagamentoAPI-->>Cliente: cartaoValido()
+        Cliente->>PagamentoAPI: processarPagamento(valor)
+
+        alt Pagamento aprovado
+            PagamentoAPI-->>Cliente: confirmarTransacao()
+            Ingresso->>Ingresso: confirmarPagamento()
+        else Pagamento recusado
+            PagamentoAPI-->>Cliente: transacaoNaoAprovada()
+        end
+    else Dados inválidos
+        PagamentoAPI-->>Cliente: erroCartaoInvalido()
+    end
+
+
+---
+title: UC-04 Gerenciar Transação
+---
+sequenceDiagram
+    participant Cliente
+    participant PagamentoAPI
+
+    Cliente->>PagamentoAPI: validarCartao(dadosCartao)
+
+    alt Cartão válido
+        PagamentoAPI-->>Cliente: cartaoValido()
+        Cliente->>PagamentoAPI: processarPagamento(valor)
+
+        alt Saldo/limite suficiente
+            PagamentoAPI-->>Cliente: confirmarTransacao()
+        else Sem saldo/limite
+            PagamentoAPI-->>Cliente: transacaoNaoAprovada()
+        end
+    else Cartão inválido
+        PagamentoAPI-->>Cliente: erroCartaoInvalido()
+    end
+
+
+---
+title: UC-05 Visualizar Ingressos Reservados
+---
+sequenceDiagram
+    actor Cliente
+    participant Ingresso
+    participant PagamentoAPI
+    participant Cliente as Cliente
+
+    Cliente->>Cliente: consultarIngressos()
+    Ingresso-->>Cliente: listarIngressos()
+
+    opt Nova tentativa de pagamento
+        Cliente->>Cliente: informarPagamento(dadosCartao)
+        Cliente->>PagamentoAPI: validarCartao(dadosCartao)
+
+        alt Cartão válido
+            PagamentoAPI-->>Cliente: cartaoValido()
+            Cliente->>PagamentoAPI: processarPagamento(valor)
+
+            alt Pagamento aprovado
+                PagamentoAPI-->>Cliente: confirmarTransacao()
+                Ingresso->>Ingresso: confirmarPagamento()
+            else Pagamento não aprovado
+                PagamentoAPI-->>Cliente: transacaoNaoAprovada()
+            end
+        else Dados inválidos
+            PagamentoAPI-->>Cliente: erroCartaoInvalido()
+        end
+    end
+
+    opt Exportar ingresso
+        Cliente->>Cliente: solicitarExportacaoIngresso(ingresso)
+        Ingresso->>Ingresso: gerarArquivo()
+    end
+
+
+---
+title: UC-06 Cadastrar Administrador
+---
+sequenceDiagram
+    actor Administrador
+    participant Administrador as Administrador
+
+    Administrador->>Administrador: validarCadastro()
+
+    alt Dados válidos
+        Administrador-->>Administrador: cadastroConfirmado()
+    else CPF inválido ou duplicado
+        Administrador-->>Administrador: erroCadastro()
+    end
+
+
+---
+title: UC-07 Cadastrar Cinema
+---
+sequenceDiagram
+    actor Administrador
+    participant Administrador as Administrador
+    participant Cinema
+
+    Administrador->>Administrador: solicitarCadastroCinema(cinema)
+    Administrador->>Cinema: adicionarSala(sala)
+
+    alt Dados válidos
+        Cinema-->>Administrador: cadastroConfirmado()
+    else Dados inválidos ou cinema existente
+        Cinema-->>Administrador: erroCadastro()
+    end
+
+
+---
+title: UC-08 Gerenciar Filme
+---
+sequenceDiagram
+    actor Administrador
+    participant Administrador as Administrador
+    participant Filme
+
+    Administrador->>Administrador: solicitarCadastroFilme(filme)
+
+    alt Cadastrar
+        Administrador->>Filme: atualizarDados(titulo, duracao, sinopse, classificacao)
+        Filme-->>Administrador: operacaoRealizada()
+    else Editar
+        Administrador->>Administrador: solicitarEdicaoFilme(filme)
+        Administrador->>Filme: atualizarDados(titulo, duracao, sinopse, classificacao)
+        Filme-->>Administrador: operacaoRealizada()
+    else Remover
+        Administrador->>Administrador: solicitarRemocaoFilme(filme)
+        Administrador->>Filme: remover()
+        Filme-->>Administrador: operacaoRealizada()
+    end
+
+
+---
+title: UC-09 Gerenciar Sessão
+---
+sequenceDiagram
+    actor Administrador
+    participant Administrador as Administrador
+    participant Sala
+    participant Sessao
+
+    Administrador->>Administrador: solicitarCadastroSessao(sessao)
+    Administrador->>Sala: validarAssento(assento)
+    Administrador->>Sessao: verificarDisponibilidadeAssento(numeroAssento)
+
+    alt Sem conflito
+        Sala->>Sala: adicionarSessao(sessao)
+        Sessao-->>Administrador: operacaoRealizada()
+    else Com conflito
+        Sessao-->>Administrador: erroConflito()
+    end
+
+
+---
+title: UC-10 Gerenciar Melhores Assentos
+---
+sequenceDiagram
+    actor Administrador
+    participant Administrador as Administrador
+    participant Sala
+
+    Administrador->>Administrador: configurarMelhoresAssentos(sessao, assentos)
+    Administrador->>Sala: definirMelhoresAssentos(listaAssentos)
+    Sala->>Sala: verificarDisponibilidade(assento)
+
+    alt Assentos válidos
+        Sala-->>Administrador: configuracaoSalva()
+    else Assentos inválidos
+        Sala-->>Administrador: erroConfiguracao()
+    end
+
+
+---
+title: UC-11 Emitir Relatório Consolidado
+---
+sequenceDiagram
+    actor Administrador
+    participant Administrador as Administrador
+    participant Relatorio
+    participant Cinema
+    participant Sessao
+    participant Filme
+
+    Administrador->>Administrador: solicitarRelatorioConsolidado(periodo)
+    Administrador->>Relatorio: gerarConsolidado(periodoInicio, periodoFim)
+    Relatorio->>Cinema: gerarDadosRelatorio(periodo)
+    Relatorio->>Sessao: gerarDadosRelatorio()
+    Relatorio->>Filme: atualizarDados()
+
+    alt Dados suficientes
+        Relatorio-->>Administrador: exportar()
+    else Dados insuficientes
+        Relatorio-->>Administrador: erroGeracao()
+    end
+
+
+---
+title: UC-12 Listar Filmes
+---
+sequenceDiagram
+    actor Ancine
+    participant AncineAPI
+
+    Ancine->>AncineAPI: listarFilmesOficiais()
+
+    alt Filmes disponíveis
+        AncineAPI-->>Ancine: listaFilmes
+    else Sem filmes
+        AncineAPI-->>Ancine: listaVazia
+    end
+
+
+---
+title: UC-13 Receber Relatórios
+---
+sequenceDiagram
+    actor Ancine
+    participant Relatorio
+    participant AncineAPI
+
+    Relatorio->>Relatorio: gerarConsolidado(periodoInicio, periodoFim)
+
+    alt Relatório gerado com sucesso
+        Relatorio->>AncineAPI: receberRelatorio(relatorio)
+        AncineAPI->>Ancine: confirmarRecebimento()
+    else Erro ao gerar relatório
+        Relatorio-->>Ancine: erroGeracao()
+    end
